@@ -1241,6 +1241,9 @@ endif()
 # Render config header file for CPackLib
 configure_file(CPack/cmCPackConfigure.h.in CPack/cmCPackConfigure.h)
 
+find_package(pybind11 REQUIRED)
+target_sources(CMakeLib PRIVATE cmCMakePy.cxx cmCMakePy.h)
+target_link_libraries(CMakeLib PRIVATE pybind11::embed)
 
 # Build CMake executable
 add_executable(cmake cmakemain.cxx cmcmd.cxx cmcmd.h)

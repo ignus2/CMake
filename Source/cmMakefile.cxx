@@ -72,6 +72,8 @@
 #  include "cmDebuggerAdapter.h"
 #endif
 
+#include "cmCMakePy.h"
+
 #ifndef __has_feature
 #  define __has_feature(x) 0
 #endif
@@ -885,17 +887,23 @@ void cmMakefile::RunListFile(cmListFile const& listFile,
   this->MarkVariableAsUsed("CMAKE_CURRENT_LIST_DIR");
 
   // Run the parsed commands.
-  const size_t numberFunctions = listFile.Functions.size();
-  for (size_t i = 0; i < numberFunctions; ++i) {
+  if (listFile.IsPython) {
+    cmCMakePy* cmakepy = this->GetCMakeInstance()->GetCMakePy();
     cmExecutionStatus status(*this);
-    this->ExecuteCommand(listFile.Functions[i], status);
-    if (cmSystemTools::GetFatalErrorOccurred()) {
-      break;
-    }
-    if (status.GetReturnInvoked()) {
-      this->RaiseScope(status.GetReturnVariables());
-      // Exit early due to return command.
-      break;
+    cmakepy->Run(listFile, status);
+  } else {
+    const size_t numberFunctions = listFile.Functions.size();
+    for (size_t i = 0; i < numberFunctions; ++i) {
+      cmExecutionStatus status(*this);
+      this->ExecuteCommand(listFile.Functions[i], status);
+      if (cmSystemTools::GetFatalErrorOccurred()) {
+        break;
+      }
+      if (status.GetReturnInvoked()) {
+        this->RaiseScope(status.GetReturnVariables());
+        // Exit early due to return command.
+        break;
+      }
     }
   }
 
@@ -1752,7 +1760,7 @@ void cmMakefile::Configure()
   }
 #endif
 
-  if (this->IsRootMakefile()) {
+  if (!listFile.IsPython && this->IsRootMakefile()) {
     bool hasVersion = false;
     // search for the right policy command
     for (cmListFileFunction const& func : listFile.Functions) {

@@ -108,6 +108,7 @@ public:
   std::string FilePath;
   long Line = 0;
   static long const DeferPlaceholderLine = -1;
+  static long const PythonPlaceholderLine = -999;
   cm::optional<std::string> DeferId;
 
   cmListFileContext() = default;
@@ -244,4 +245,7 @@ struct cmListFile
                    cmMessenger* messenger, cmListFileBacktrace const& lfbt);
 
   std::vector<cmListFileFunction> Functions;
+  bool IsPython = false;
+  std::string Path;   // if ParseFile() was called, otherwise empty
+  std::string String; // if ParseString() was called, otherwise empty
 };

@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <sstream>
+#include <fstream>
 #include <utility>
 
 #ifdef _WIN32
@@ -181,12 +182,29 @@ bool cmListFileParser::Parse()
   return true;
 }
 
+static bool cmIsPython(std::istream& istr)
+{
+  std::string magic;
+  istr >> magic;
+  return magic == "#!cmakepy";
+}
+
 bool cmListFile::ParseFile(const char* filename, cmMessenger* messenger,
                            cmListFileBacktrace const& lfbt)
 {
   if (!cmSystemTools::FileExists(filename) ||
       cmSystemTools::FileIsDirectory(filename)) {
     return false;
+  }
+
+  {
+    if (cmIsPython(std::ifstream(filename)))
+    {
+      //cmSystemTools::Message("[cmakepy] File is python: " + std::string(filename));
+      IsPython = true;
+      Path = filename;
+      return true;
+    }
   }
 
   bool parseError = false;
@@ -204,6 +222,15 @@ bool cmListFile::ParseString(const char* str, const char* virtual_filename,
                              const cmListFileBacktrace& lfbt)
 {
   bool parseError = false;
+
+  {
+    if (cmIsPython(std::istringstream(str))) {
+      // cmSystemTools::Message("[cmakepy] String is python, virtual filename: " + std::string(virtual_filename));
+      IsPython = true;
+      String = str;
+      return true;
+    }
+  }
 
   {
     cmListFileParser parser(this, lfbt, messenger);
@@ -468,6 +495,8 @@ std::ostream& operator<<(std::ostream& os, cmListFileContext const& lfc)
     }
   } else if (lfc.Line == cmListFileContext::DeferPlaceholderLine) {
     os << ":DEFERRED";
+  } else if (lfc.Line == cmListFileContext::PythonPlaceholderLine) {
+    os << ":PYTHON " << " (" << lfc.Name << ")";
   }
   return os;
 }

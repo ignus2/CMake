@@ -142,6 +142,8 @@
 #  include <sys/time.h>
 #endif
 
+#include "cmCMakePy.h"
+
 namespace {
 
 #if !defined(CMAKE_BOOTSTRAP)
@@ -294,6 +296,7 @@ cmake::cmake(Role role, cmState::Mode mode, cmState::ProjectKind projectKind)
   , State(cm::make_unique<cmState>(mode, projectKind))
   , Messenger(cm::make_unique<cmMessenger>())
 {
+  this->CMakePy = std::make_unique<cmCMakePy>(this);
   this->TraceFile.close();
   this->CurrentSnapshot = this->State->CreateBaseSnapshot();
 

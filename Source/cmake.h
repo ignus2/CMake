@@ -54,6 +54,8 @@ class cmMessenger;
 class cmVariableWatch;
 struct cmBuildOptions;
 
+class cmCMakePy;
+
 /** \brief Represents a cmake invocation.
  *
  * This class represents a cmake invocation. It is the top level class when
@@ -688,6 +690,8 @@ public:
   }
 #endif
 
+  cmCMakePy* GetCMakePy() const { return this->CMakePy.get(); }
+
 protected:
   void RunCheckForUnusedVariables();
   int HandleDeleteCacheVariables(const std::string& var);
@@ -834,6 +838,8 @@ private:
   std::string DebuggerPipe;
   std::string DebuggerDapLogFile;
 #endif
+
+  std::unique_ptr<cmCMakePy> CMakePy;
 
 public:
   static cmDocumentationEntry CMAKE_STANDARD_OPTIONS_TABLE[18];
